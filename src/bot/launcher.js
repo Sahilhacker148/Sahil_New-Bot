@@ -39,8 +39,6 @@ const MAX_RECONNECT_ATTEMPTS = 10;
 const activeSockets = new Map();
 
 // ─── BAILEYS ESM LOADER (cached after first load) ────────────────────────────
-// Dynamic import() is the ONLY way to load pure-ESM packages from CommonJS.
-// We cache the result so import() runs only once across all sessions.
 let _baileys = null;
 async function getBaileys() {
   if (_baileys) return _baileys;
@@ -59,7 +57,6 @@ async function startBot(
   phoneNumber = null
 ) {
   try {
-    // ── Load Baileys ESM dynamically ──────────────────────────────────────────
     const {
       default: makeWASocket,
       DisconnectReason,
@@ -71,14 +68,12 @@ async function startBot(
 
     if (!sessionId) sessionId = generateSessionId();
 
-    // ── Kill existing socket for this session ─────────────────────────────────
     if (activeSockets.has(sessionId)) {
       try { activeSockets.get(sessionId).end(undefined); } catch (_) {}
       activeSockets.delete(sessionId);
       await new Promise((r) => setTimeout(r, 2000));
     }
 
-    // ── Clear any pending reconnect timer ─────────────────────────────────────
     if (reconnectTimers.has(sessionId)) {
       clearTimeout(reconnectTimers.get(sessionId));
       reconnectTimers.delete(sessionId);
@@ -87,7 +82,6 @@ async function startBot(
     const authDir = path.join(SESSIONS_DIR, sessionId);
     fs.mkdirSync(authDir, { recursive: true });
 
-    // ── Auth state: Firebase (persistent) → fallback to filesystem ────────────
     let state, saveCreds;
     try {
       const fbAuth  = await useFirebaseAuthState(sessionId);
@@ -101,9 +95,16 @@ async function startBot(
       saveCreds       = localAuth.saveCreds;
     }
 
-    const { version } = await fetchLatestBaileysVersion().catch(() => ({
-      version: [2, 3000, 1015526],
-    }));
+    // ── BUG FIX: fetchLatestBaileysVersion with proper fallback ──────────────
+    let version;
+    try {
+      const result = await fetchLatestBaileysVersion();
+      version = result.version;
+      logger.info(`Baileys version: ${version}`);
+    } catch (_) {
+      version = [2, 3000, 1015526];
+      logger.warn(`fetchLatestBaileysVersion failed — using fallback: ${version}`);
+    }
 
     let pairCodeRequested = false;
 
@@ -113,16 +114,16 @@ async function startBot(
         creds: state.creds,
         keys:  makeCacheableSignalKeyStore(state.keys, silentLogger),
       },
-      printQRInTerminal:            false,
-      logger:                       silentLogger,
-      browser:                      Browsers.ubuntu('Chrome'),
-      connectTimeoutMs:             60_000,
-      defaultQueryTimeoutMs:        60_000,
-      keepAliveIntervalMs:          30_000,
-      markOnlineOnConnect:          true,
+      printQRInTerminal:              false,
+      logger:                         silentLogger,
+      browser:                        Browsers.ubuntu('Chrome'),
+      connectTimeoutMs:               60_000,
+      defaultQueryTimeoutMs:          60_000,
+      keepAliveIntervalMs:            30_000,
+      markOnlineOnConnect:            true,
       generateHighQualityLinkPreview: true,
-      syncFullHistory:              false,
-      fireInitQueries:              false,
+      syncFullHistory:                false,
+      fireInitQueries:                false,
     });
 
     activeSockets.set(sessionId, sock);
@@ -134,7 +135,12 @@ async function startBot(
 
       if (qr && onQR) onQR(qr);
 
-      // Pair code — triggered on 'connecting' state
+      // ── BUG FIX: Pair code timing ─────────────────────────────────────────
+      // ROOT CAUSE: In Baileys v6.7.x, calling requestPairingCode() immediately
+      // on 'connecting' event causes "Connection Closed" + 401 because the
+      // WebSocket handshake with WhatsApp is NOT complete at that point.
+      // FIX: Delay pair code request by 3 seconds after 'connecting' fires,
+      // giving the WS handshake enough time to fully complete.
       if (
         connection === 'connecting' &&
         phoneNumber &&
@@ -142,19 +148,24 @@ async function startBot(
         !pairCodeRequested
       ) {
         pairCodeRequested = true;
-        try {
-          const cleanNum = phoneNumber.replace(/[^0-9]/g, '').replace(/^0+/, '');
-          const code     = await sock.requestPairingCode(cleanNum);
-          logger.info(`Pair code for ${sessionId}: ${code}`);
-          if (onPairCode) onPairCode(code);
-        } catch (err) {
-          logger.error(`Pair code error: ${err.message}`);
-          if (onPairCode) onPairCode(null, err.message);
-        }
+        setTimeout(async () => {
+          // Safety check: socket must still be active after delay
+          if (!activeSockets.has(sessionId)) return;
+          try {
+            const cleanNum = phoneNumber.replace(/[^0-9]/g, '').replace(/^0+/, '');
+            logger.info(`Requesting pair code for: ${cleanNum} (session: ${sessionId})`);
+            const code = await sock.requestPairingCode(cleanNum);
+            logger.info(`Pair code for ${sessionId}: ${code}`);
+            if (onPairCode) onPairCode(code);
+          } catch (err) {
+            logger.error(`Pair code error: ${err.message}`);
+            if (onPairCode) onPairCode(null, err.message);
+          }
+        }, 3000);
       }
 
       if (connection === 'close') {
-        const statusCode    = lastDisconnect?.error?.output?.statusCode;
+        const statusCode      = lastDisconnect?.error?.output?.statusCode;
         const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
         logger.warn(`Bot ${sessionId} disconnected. Code: ${statusCode}`);
@@ -272,3 +283,4 @@ async function stopBot(sessionId) {
 }
 
 module.exports = { startBot, stopBot };
+      
