@@ -17,7 +17,14 @@
 
 'use strict';
 
-const { initAuthCreds, BufferJSON } = require('@whiskeysockets/baileys');
+let initAuthCreds, BufferJSON;
+async function loadBaileys() {
+  if (!initAuthCreds) {
+    const b    = await import('@whiskeysockets/baileys');
+    initAuthCreds = b.initAuthCreds;
+    BufferJSON    = b.BufferJSON;
+  }
+}
 const { rtdb, initOk } = require('../firebase/config');
 
 // ─── HELPERS ─────────────────────────────────────────────
@@ -95,6 +102,7 @@ async function clearSession(sessionId) {
  * @returns {{ state: AuthenticationState, saveCreds: function }}
  */
 async function useFirebaseAuthState(sessionId) {
+  await loadBaileys();
   // ── Load existing session data ──
   let stored = null;
   if (initOk && rtdb) {
