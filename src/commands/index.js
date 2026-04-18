@@ -1,5 +1,13 @@
 const config = require('../config/config');
-const { downloadMediaMessage } = require('@whiskeysockets/baileys');
+
+// ─── BAILEYS ESM LAZY LOADER ──────────────────────────────────────────────────
+// @whiskeysockets/baileys v6.7+ is pure ESM — require() crashes.
+// Solution: lazy dynamic import(), cached after first call.
+let _baileys = null;
+async function getBaileys() {
+  if (!_baileys) _baileys = await import('@whiskeysockets/baileys');
+  return _baileys;
+}
 const NodeCache = require('node-cache');
 const apiCache = new NodeCache({ stdTTL: 60, checkperiod: 30 }); // 60s cache for API results
 const {
@@ -968,7 +976,7 @@ async function handleCommand(sock, msg, sessionId, botMode, botOwnerJid) {
         : '❌ Could not fetch color info.');
       return true;
     }
-
+    
     // ═══════════════════════════════════════════════
     // 56. NUMBER FACT
     // ═══════════════════════════════════════════════
@@ -1414,7 +1422,7 @@ async function handleCommand(sock, msg, sessionId, botMode, botOwnerJid) {
       await reply(`╔══════════════════════╗\n║ 👥 USER LIST (${page}/${totalPages})    ║\n╠══════════════════════╣\n${list}\n╚══════════════════════╝`);
       return true;
     }
-
+    
     // 90. LIST ALL SESSIONS (super admin)
     if (cmd === 'sessions' && superAdmin) {
       const sessions = await getAllSessions();
@@ -1594,6 +1602,7 @@ async function handleCommand(sock, msg, sessionId, botMode, botOwnerJid) {
       }
       await reply('⏳ 𝑪𝒓𝒆𝒂𝒕𝒊𝒏𝒈 𝒔𝒕𝒊𝒄𝒌𝒆𝒓...');
       try {
+        const { downloadMediaMessage } = await getBaileys();
         const msgToDownload = { message: quoted, key: msg.key };
         if (quoted.imageMessage) {
           const buffer = await downloadMediaMessage(msgToDownload, 'buffer', {});
@@ -1816,3 +1825,4 @@ async function handleCommand(sock, msg, sessionId, botMode, botOwnerJid) {
 }
 
 module.exports = { handleCommand };
+        
