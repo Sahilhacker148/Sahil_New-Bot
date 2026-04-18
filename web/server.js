@@ -89,35 +89,11 @@ const app    = express();
 const server = http.createServer(app);
 const wss    = new WebSocketServer({ server, path: '/ws' });
 
-// ─── FIRESTORE SESSION STORE SETUP ───────────────────────────────────────────
-// connect-session-firestore v3+ API: no longer wraps express-session.
-// Instead it exports FirestoreStore class directly.
-// Falls back to MemoryStore if Firebase failed to initialize (graceful degradation).
-let sessionStore;
-try {
-  const firebaseModule = require('../src/firebase/config');
-  const firestoreDb    = firebaseModule.db;
-
-  if (!firestoreDb) {
-    throw new Error('Firestore not initialized — check Firebase environment variables');
-  }
-
-  // ✅ v3+ correct API: import FirestoreStore directly, pass session to constructor
-  const { FirestoreStore } = require('connect-session-firestore');
-  sessionStore = new FirestoreStore({
-    database:   firestoreDb,
-    collection: 'express_sessions',
-    session,                          // pass express-session here (v3 requirement)
-  });
-
-  logger.success('✅ Firestore session store initialized successfully');
-} catch (err) {
-  logger.warn('⚠️  Firestore session store failed — using MemoryStore as fallback');
-  logger.warn('   Reason:', err.message);
-  logger.warn('   Impact: Sessions will NOT persist across server restarts');
-  logger.warn('   Fix   : Ensure all FIREBASE_* environment variables are set correctly');
-  sessionStore = undefined; // express-session defaults to MemoryStore
-}
+// ─── SESSION STORE ────────────────────────────────────────────────────────────
+// Using express-session's built-in MemoryStore.
+// Zero extra dependencies — works perfectly on Railway single-instance.
+// Note: Sessions clear on server restart (login again required after redeploy).
+const sessionStore = undefined; // undefined = express-session uses MemoryStore automatically
 
 // ─── SECURITY MIDDLEWARE ─────────────────────────────────────────────────────
 // BUG FIX #3: Railway sits behind a reverse proxy. Without trust proxy = 1,
@@ -560,7 +536,73 @@ app.post('/api/bot/mode', isAuth, async (req, res) => {
     if (!sessionId)
       return res.status(400).json({ error: 'Session ID is required.' });
     if (!['public', 'private'].includes(mode))
-     return res.status(400).json({ error: 'Mode must be "public" or "private".' });
+      return res.status(400).json({ error: 'Mode must be "public" or "private".' });
+
+    const sess = await getSession(sessionId);
+    if (!sess)
+      return res.status(404).json({ error: 'Session not found.' });
+    if (sess.userId !== req.session.userId && !req.session.isAdmin)
+      return res.status(403).json({ error: 'Unauthorized.' });
+
+    await setSessionMode(sessionId, mode);
+    return res.json({ success: true, mode });
+
+  } catch (err) {
+    logger.error('POST /api/bot/mode error:', err.message);
+    return res.status(500).json({ error: 'Failed to update bot mode.' });
+  }
+});
+
+// POST /api/bot/restart
+app.post('/api/bot/restart', isAuth, async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    if (!sessionId)
+      return res.status(400).json({ error: 'Session ID is required.' });
+
+    const sess = await getSession(sessionId);
+    if (!sess)
+      return res.status(404).json({ error: 'Session not found.' });
+    if (sess.userId !== req.session.userId && !req.session.isAdmin)
+      return res.status(403).json({ error: 'Unauthorized.' });
+
+    await stopBot(sessionId);
+    return res.json({ success: true });
+
+  } catch (err) {
+    logger.error('POST /api/bot/stop error:', err.message);
+    return res.status(500).json({ error: 'Failed to stop bot.' });
+  }
+});
+
+// DELETE /api/bot/:sessionId
+app.delete('/api/bot/:sessionId', isAuth, async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const sess = await getSession(sessionId);
+    if (!sess)
+      return res.status(404).json({ error: 'Session not found.' });
+    if (sess.userId !== req.session.userId && !req.session.isAdmin)
+      return res.status(403).json({ error: 'Unauthorized.' });
+
+    await stopBot(sessionId);
+    await deleteSession(sessionId);
+    return res.json({ success: true });
+
+  } catch (err) {
+    logger.error('DELETE /api/bot/:sessionId error:', err.message);
+    return res.status(500).json({ error: 'Failed to delete bot.' });
+  }
+});
+
+// POST /api/bot/mode
+app.post('/api/bot/mode', isAuth, async (req, res) => {
+  try {
+    const { sessionId, mode } = req.body;
+    if (!sessionId)
+      return res.status(400).json({ error: 'Session ID is required.' });
+    if (!['public', 'private'].includes(mode))
+      return res.status(400).json({ error: 'Mode must be "public" or "private".' });
 
     const sess = await getSession(sessionId);
     if (!sess)
@@ -879,4 +921,5 @@ process.on('unhandledRejection', (reason) => {
   logger.error('Unhandled Promise Rejection:', reason);
 });
 
-module.exports = app;
+module.exports = app
+      
