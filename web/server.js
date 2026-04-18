@@ -89,82 +89,10 @@ const app    = express();
 const server = http.createServer(app);
 const wss    = new WebSocketServer({ server, path: '/ws' });
 
-// ─── CUSTOM FIRESTORE SESSION STORE ──────────────────────────────────────────
-// Built from scratch using firebase-admin 12 directly.
-// No third-party connect-session-firestore package needed.
-// connect-session-firestore@^2.0.0 does NOT exist on npm (only 1.0.0 exists
-// and that requires firebase-admin@^5 which is incompatible with our v12).
-// This custom store implements the full express-session Store interface.
-
-const { Store } = session;
-
-class FirestoreSessionStore extends Store {
-  constructor(db, collection = 'express_sessions') {
-    super();
-    this.db         = db;
-    this.collection = collection;
-  }
-
-  // Get session by sid
-  async get(sid, callback) {
-    try {
-      const doc = await this.db.collection(this.collection).doc(sid).get();
-      if (!doc.exists) return callback(null, null);
-      const data = doc.data();
-      // Check expiry
-      if (data.expires && data.expires.toDate && data.expires.toDate() < new Date()) {
-        await this.destroy(sid, () => {});
-        return callback(null, null);
-      }
-      return callback(null, data.session || null);
-    } catch (err) {
-      return callback(err);
-    }
-  }
-
-  // Set/update session
-  async set(sid, sessionData, callback) {
-    try {
-      const maxAge  = sessionData.cookie?.maxAge || 86400000; // default 24h
-      const expires = new Date(Date.now() + maxAge);
-      await this.db.collection(this.collection).doc(sid).set({
-        session:    sessionData,
-        expires:    expires,
-        updatedAt:  new Date(),
-      });
-      return callback(null);
-    } catch (err) {
-      return callback(err);
-    }
-  }
-
-  // Destroy session
-  async destroy(sid, callback) {
-    try {
-      await this.db.collection(this.collection).doc(sid).delete();
-      return callback(null);
-    } catch (err) {
-      return callback(err);
-    }
-  }
-
-  // Touch — refresh expiry without changing session data
-  async touch(sid, sessionData, callback) {
-    try {
-      const maxAge  = sessionData.cookie?.maxAge || 86400000;
-      const expires = new Date(Date.now() + maxAge);
-      await this.db.collection(this.collection).doc(sid).update({
-        expires:   expires,
-        updatedAt: new Date(),
-      });
-      return callback(null);
-    } catch (err) {
-      return callback(null); // non-fatal — silently ignore
-    }
-  }
-}
-
-// ─── INITIALIZE SESSION STORE ─────────────────────────────────────────────────
+// ─── FIRESTORE SESSION STORE SETUP ───────────────────────────────────────────
+// connect-session-firestore v3+ API: no longer wraps express-session.
+// Instead it exports FirestoreStore class directly.
+// Falls back to MemoryStore if Firebase failed to initialize (graceful degradation).
 let sessionStore;
 try {
   const firebaseModule = require('../src/firebase/config');
@@ -174,8 +102,15 @@ try {
     throw new Error('Firestore not initialized — check Firebase environment variables');
   }
 
-  sessionStore = new FirestoreSessionStore(firestoreDb, 'express_sessions');
-  logger.success('✅ Custom Firestore session store initialized successfully');
+  // ✅ v3+ correct API: import FirestoreStore directly, pass session to constructor
+  const { FirestoreStore } = require('connect-session-firestore');
+  sessionStore = new FirestoreStore({
+    database:   firestoreDb,
+    collection: 'express_sessions',
+    session,                          // pass express-session here (v3 requirement)
+  });
+
+  logger.success('✅ Firestore session store initialized successfully');
 } catch (err) {
   logger.warn('⚠️  Firestore session store failed — using MemoryStore as fallback');
   logger.warn('   Reason:', err.message);
@@ -625,7 +560,7 @@ app.post('/api/bot/mode', isAuth, async (req, res) => {
     if (!sessionId)
       return res.status(400).json({ error: 'Session ID is required.' });
     if (!['public', 'private'].includes(mode))
-      return res.status(400).json({ error: 'Mode must be "public" or "private".' });
+     return res.status(400).json({ error: 'Mode must be "public" or "private".' });
 
     const sess = await getSession(sessionId);
     if (!sess)
