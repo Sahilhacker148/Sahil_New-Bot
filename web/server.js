@@ -89,16 +89,84 @@ const app    = express();
 const server = http.createServer(app);
 const wss    = new WebSocketServer({ server, path: '/ws' });
 
-// ─── FIRESTORE SESSION STORE SETUP ───────────────────────────────────────────
-// Uses connect-session-firestore to persist express sessions in Firestore.
-// This means sessions survive server restarts and Railway deployments.
-// Falls back to MemoryStore if Firebase failed to initialize (graceful degradation).
-//
-// IMPORTANT: We use require('../src/firebase/config').db AFTER the module has
-// already initialized (IIFE runs at require time), so db is ready here.
+// ─── CUSTOM FIRESTORE SESSION STORE ──────────────────────────────────────────
+// Built from scratch using firebase-admin 12 directly.
+// No third-party connect-session-firestore package needed.
+// connect-session-firestore@^2.0.0 does NOT exist on npm (only 1.0.0 exists
+// and that requires firebase-admin@^5 which is incompatible with our v12).
+// This custom store implements the full express-session Store interface.
+
+const { Store } = session;
+
+class FirestoreSessionStore extends Store {
+  constructor(db, collection = 'express_sessions') {
+    super();
+    this.db         = db;
+    this.collection = collection;
+  }
+
+  // Get session by sid
+  async get(sid, callback) {
+    try {
+      const doc = await this.db.collection(this.collection).doc(sid).get();
+      if (!doc.exists) return callback(null, null);
+      const data = doc.data();
+      // Check expiry
+      if (data.expires && data.expires.toDate && data.expires.toDate() < new Date()) {
+        await this.destroy(sid, () => {});
+        return callback(null, null);
+      }
+      return callback(null, data.session || null);
+    } catch (err) {
+      return callback(err);
+    }
+  }
+
+  // Set/update session
+  async set(sid, sessionData, callback) {
+    try {
+      const maxAge  = sessionData.cookie?.maxAge || 86400000; // default 24h
+      const expires = new Date(Date.now() + maxAge);
+      await this.db.collection(this.collection).doc(sid).set({
+        session:    sessionData,
+        expires:    expires,
+        updatedAt:  new Date(),
+      });
+      return callback(null);
+    } catch (err) {
+      return callback(err);
+    }
+  }
+
+  // Destroy session
+  async destroy(sid, callback) {
+    try {
+      await this.db.collection(this.collection).doc(sid).delete();
+      return callback(null);
+    } catch (err) {
+      return callback(err);
+    }
+  }
+
+  // Touch — refresh expiry without changing session data
+  async touch(sid, sessionData, callback) {
+    try {
+      const maxAge  = sessionData.cookie?.maxAge || 86400000;
+      const expires = new Date(Date.now() + maxAge);
+      await this.db.collection(this.collection).doc(sid).update({
+        expires:   expires,
+        updatedAt: new Date(),
+      });
+      return callback(null);
+    } catch (err) {
+      return callback(null); // non-fatal — silently ignore
+    }
+  }
+}
+
+// ─── INITIALIZE SESSION STORE ─────────────────────────────────────────────────
 let sessionStore;
 try {
-  // Re-read db from module to get the initialized instance (not cached null)
   const firebaseModule = require('../src/firebase/config');
   const firestoreDb    = firebaseModule.db;
 
@@ -106,15 +174,9 @@ try {
     throw new Error('Firestore not initialized — check Firebase environment variables');
   }
 
-  const ConnectSessionFirestore = require('connect-session-firestore')(session);
-  sessionStore = new ConnectSessionFirestore({
-    database:   firestoreDb,   // Firestore instance
-    collection: 'express_sessions', // separate from bot sessions collection
-  });
-
-  logger.success('✅ Firestore session store initialized successfully');
+  sessionStore = new FirestoreSessionStore(firestoreDb, 'express_sessions');
+  logger.success('✅ Custom Firestore session store initialized successfully');
 } catch (err) {
-  // Graceful fallback: MemoryStore works for single-instance but sessions are lost on restart
   logger.warn('⚠️  Firestore session store failed — using MemoryStore as fallback');
   logger.warn('   Reason:', err.message);
   logger.warn('   Impact: Sessions will NOT persist across server restarts');
@@ -200,7 +262,8 @@ function wsSend(sessionId, data) {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+// 
+═══════════════════════════════════════════════════════════════════════════
 //  AUTH ROUTES
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -883,3 +946,4 @@ process.on('unhandledRejection', (reason) => {
 });
 
 module.exports = app;
+      
