@@ -1,57 +1,54 @@
-const {
-  default: makeWASocket,
-  DisconnectReason,
-  useMultiFileAuthState,
-  fetchLatestBaileysVersion,
-  makeCacheableSignalKeyStore,
-  Browsers,
-} = require('@whiskeysockets/baileys');
-
-// Firebase-backed auth state (survives Railway restarts)
-// Falls back to useMultiFileAuthState if Firebase is unavailable
-const { useFirebaseAuthState, clearSession: clearFirebaseSession } = require('../utils/firebaseAuthState');
+'use strict';
+// ============================================================
+//  launcher.js — FIXED for @whiskeysockets/baileys v6.7.x ESM
+//  Baileys v6.7+ is pure ESM — require() does NOT work.
+//  Fix: lazy dynamic import() wrapped inside an async init.
+//  All exports remain identical — no other file needs changes.
+// ============================================================
 
 const path = require('path');
-const fs = require('fs');
+const fs   = require('fs');
 
-const config = require('../config/config');
+const config  = require('../config/config');
 const { logger, registerBot, removeBot, generateSessionId } = require('../utils/helpers');
-const { handleMessage } = require('../handlers/messageHandler');
-const { createSession, getSession, updateSession } = require('../firebase/config');
+const { handleMessage }                                      = require('../handlers/messageHandler');
+const { createSession, getSession, updateSession }           = require('../firebase/config');
+const { useFirebaseAuthState, clearSession: clearFirebaseSession } = require('../utils/firebaseAuthState');
 
-// ─── SAFE GLOBAL ERROR HANDLERS ─────────────────────────
-process.on('uncaughtException', (err) => {
-  console.error('UNCAUGHT EXCEPTION:', err);
-});
+// ─── SAFE GLOBAL ERROR HANDLERS ──────────────────────────────────────────────
+process.on('uncaughtException',  (err) => console.error('UNCAUGHT EXCEPTION:',  err));
+process.on('unhandledRejection', (err) => console.error('UNHANDLED REJECTION:', err));
 
-process.on('unhandledRejection', (err) => {
-  console.error('UNHANDLED REJECTION:', err);
-});
-
-// ─── SESSIONS DIRECTORY ──────────────────────────────────
+// ─── SESSIONS DIRECTORY ───────────────────────────────────────────────────────
 const SESSIONS_DIR = path.join(__dirname, '..', 'auth_info_baileys');
 
-// ─── SILENT LOGGER ───────────────────────────────────────
+// ─── SILENT LOGGER ────────────────────────────────────────────────────────────
 const silentLogger = {
   level: 'silent',
-  trace: () => {},
-  debug: () => {},
-  info: () => {},
-  warn: () => {},
-  error: () => {},
-  fatal: () => {},
+  trace: () => {}, debug: () => {}, info: () => {},
+  warn:  () => {}, error: () => {}, fatal: () => {},
   child: () => silentLogger,
 };
 
-// ─── RECONNECT CONTROL ───────────────────────────────────
+// ─── RECONNECT CONTROL ────────────────────────────────────────────────────────
 const reconnectAttempts = new Map();
-const reconnectTimers = new Map();
+const reconnectTimers   = new Map();
 const MAX_RECONNECT_ATTEMPTS = 10;
 
-// ─── ACTIVE SOCKETS REGISTRY ─────────────────────────────
+// ─── ACTIVE SOCKETS REGISTRY ─────────────────────────────────────────────────
 const activeSockets = new Map();
 
-// ─── MAIN BOT FUNCTION ────────────────────────────────────
+// ─── BAILEYS ESM LOADER (cached after first load) ────────────────────────────
+// Dynamic import() is the ONLY way to load pure-ESM packages from CommonJS.
+// We cache the result so import() runs only once across all sessions.
+let _baileys = null;
+async function getBaileys() {
+  if (_baileys) return _baileys;
+  _baileys = await import('@whiskeysockets/baileys');
+  return _baileys;
+}
+
+// ─── MAIN BOT FUNCTION ────────────────────────────────────────────────────────
 async function startBot(
   sessionId,
   userId,
@@ -62,18 +59,26 @@ async function startBot(
   phoneNumber = null
 ) {
   try {
+    // ── Load Baileys ESM dynamically ──────────────────────────────────────────
+    const {
+      default: makeWASocket,
+      DisconnectReason,
+      useMultiFileAuthState,
+      fetchLatestBaileysVersion,
+      makeCacheableSignalKeyStore,
+      Browsers,
+    } = await getBaileys();
+
     if (!sessionId) sessionId = generateSessionId();
 
-    // ─── KILL EXISTING SOCKET FOR THIS SESSION ────────
+    // ── Kill existing socket for this session ─────────────────────────────────
     if (activeSockets.has(sessionId)) {
-      try {
-        activeSockets.get(sessionId).end(undefined);
-      } catch (e) {}
+      try { activeSockets.get(sessionId).end(undefined); } catch (_) {}
       activeSockets.delete(sessionId);
       await new Promise((r) => setTimeout(r, 2000));
     }
 
-    // ─── CLEAR ANY PENDING RECONNECT TIMER ───────────
+    // ── Clear any pending reconnect timer ─────────────────────────────────────
     if (reconnectTimers.has(sessionId)) {
       clearTimeout(reconnectTimers.get(sessionId));
       reconnectTimers.delete(sessionId);
@@ -82,20 +87,23 @@ async function startBot(
     const authDir = path.join(SESSIONS_DIR, sessionId);
     fs.mkdirSync(authDir, { recursive: true });
 
-    // Prefer Firebase auth state (persistent) — fallback to filesystem
+    // ── Auth state: Firebase (persistent) → fallback to filesystem ────────────
     let state, saveCreds;
     try {
-      const fbAuth = await useFirebaseAuthState(sessionId);
-      state     = fbAuth.state;
-      saveCreds = fbAuth.saveCreds;
+      const fbAuth  = await useFirebaseAuthState(sessionId);
+      state         = fbAuth.state;
+      saveCreds     = fbAuth.saveCreds;
       logger.info(`Using Firebase auth state for session: ${sessionId}`);
     } catch (fbErr) {
       logger.warn(`Firebase auth state failed (${fbErr.message}) — using local filesystem`);
       const localAuth = await useMultiFileAuthState(authDir);
-      state     = localAuth.state;
-      saveCreds = localAuth.saveCreds;
+      state           = localAuth.state;
+      saveCreds       = localAuth.saveCreds;
     }
-    const { version } = await fetchLatestBaileysVersion().catch(() => ({ version: [2,3000,1015526] }));
+
+    const { version } = await fetchLatestBaileysVersion().catch(() => ({
+      version: [2, 3000, 1015526],
+    }));
 
     let pairCodeRequested = false;
 
@@ -103,31 +111,30 @@ async function startBot(
       version,
       auth: {
         creds: state.creds,
-        keys: makeCacheableSignalKeyStore(state.keys, silentLogger),
+        keys:  makeCacheableSignalKeyStore(state.keys, silentLogger),
       },
-      printQRInTerminal: false,
-      logger: silentLogger,
-      browser: Browsers.ubuntu('Chrome'),
-      connectTimeoutMs: 60000,
-      defaultQueryTimeoutMs: 60000,
-      keepAliveIntervalMs: 30000,
-      markOnlineOnConnect: true,
+      printQRInTerminal:            false,
+      logger:                       silentLogger,
+      browser:                      Browsers.ubuntu('Chrome'),
+      connectTimeoutMs:             60_000,
+      defaultQueryTimeoutMs:        60_000,
+      keepAliveIntervalMs:          30_000,
+      markOnlineOnConnect:          true,
       generateHighQualityLinkPreview: true,
-      syncFullHistory: false,
-      fireInitQueries: false,
+      syncFullHistory:              false,
+      fireInitQueries:              false,
     });
 
     activeSockets.set(sessionId, sock);
-
     sock.ev.on('creds.update', saveCreds);
 
-    // ─── CONNECTION HANDLER ───────────────────────────
+    // ── Connection handler ─────────────────────────────────────────────────────
     sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
 
       if (qr && onQR) onQR(qr);
 
-      // ─── PAIR CODE — triggered on 'connecting' state ──
+      // Pair code — triggered on 'connecting' state
       if (
         connection === 'connecting' &&
         phoneNumber &&
@@ -137,7 +144,7 @@ async function startBot(
         pairCodeRequested = true;
         try {
           const cleanNum = phoneNumber.replace(/[^0-9]/g, '').replace(/^0+/, '');
-          const code = await sock.requestPairingCode(cleanNum);
+          const code     = await sock.requestPairingCode(cleanNum);
           logger.info(`Pair code for ${sessionId}: ${code}`);
           if (onPairCode) onPairCode(code);
         } catch (err) {
@@ -147,11 +154,10 @@ async function startBot(
       }
 
       if (connection === 'close') {
-        const statusCode = lastDisconnect?.error?.output?.statusCode;
+        const statusCode    = lastDisconnect?.error?.output?.statusCode;
         const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
         logger.warn(`Bot ${sessionId} disconnected. Code: ${statusCode}`);
-
         activeSockets.delete(sessionId);
         removeBot(sessionId);
         await updateSession(sessionId, { status: 'inactive' }).catch(() => {});
@@ -168,7 +174,7 @@ async function startBot(
             return;
           }
 
-          const delay = Math.min(5000 * attempts, 60000);
+          const delay = Math.min(5000 * attempts, 60_000);
           logger.info(`Reconnecting ${sessionId} in ${delay}ms (attempt ${attempts})`);
 
           const timer = setTimeout(() => {
@@ -177,43 +183,36 @@ async function startBot(
           }, delay);
 
           reconnectTimers.set(sessionId, timer);
+
         } else {
           reconnectAttempts.delete(sessionId);
           reconnectTimers.delete(sessionId);
 
-          // ─── CLEANUP: local dir + Firebase auth state ──────────
           try {
             fs.rmSync(authDir, { recursive: true, force: true });
           } catch (e) {
             logger.error(`Failed to delete auth dir: ${e.message}`);
           }
-          // Also clear Firebase RTDB auth state for this session
-          clearFirebaseSession(sessionId).catch(() => {});
 
+          clearFirebaseSession(sessionId).catch(() => {});
           if (onDisconnected) onDisconnected(sessionId);
         }
       }
 
-      // ─── CONNECTED ────────────────────────────────
       if (connection === 'open') {
         reconnectAttempts.delete(sessionId);
 
-        // ─── SAFE JID NORMALIZATION ───────────────────
-        const rawId = sock.user?.id || '';
+        const rawId     = sock.user?.id || '';
         const botNumber = rawId.replace(/:[0-9]+@/, '@').replace('@s.whatsapp.net', '');
 
         logger.info(`Bot ${sessionId} connected as +${botNumber}`);
         registerBot(sessionId, sock, 'public');
 
         const existingSession = await getSession(sessionId);
-
         if (!existingSession) {
           await createSession(sessionId, userId, botNumber);
         } else {
-          await updateSession(sessionId, {
-            status: 'active',
-            whatsappNumber: botNumber,
-          });
+          await updateSession(sessionId, { status: 'active', whatsappNumber: botNumber });
         }
 
         const welcomeMsg =
@@ -230,7 +229,7 @@ async function startBot(
       }
     });
 
-    // ─── MESSAGE HANDLER ─────────────────────────────
+    // ── Message handler ────────────────────────────────────────────────────────
     sock.ev.on('messages.upsert', async ({ messages, type }) => {
       if (type !== 'notify') return;
       for (const msg of messages) {
@@ -242,16 +241,16 @@ async function startBot(
     });
 
     return sock;
+
   } catch (err) {
     console.error('BOT START ERROR:', err);
     throw err;
   }
 }
 
-// ─── STOP BOT ─────────────────────────────────────────────
+// ─── STOP BOT ─────────────────────────────────────────────────────────────────
 async function stopBot(sessionId) {
   try {
-    // ─── CANCEL ANY PENDING RECONNECT ────────────────
     if (reconnectTimers.has(sessionId)) {
       clearTimeout(reconnectTimers.get(sessionId));
       reconnectTimers.delete(sessionId);
@@ -259,11 +258,8 @@ async function stopBot(sessionId) {
 
     reconnectAttempts.delete(sessionId);
 
-    // ─── CLOSE ACTIVE SOCKET ─────────────────────────
     if (activeSockets.has(sessionId)) {
-      try {
-        activeSockets.get(sessionId).end(undefined);
-      } catch (e) {}
+      try { activeSockets.get(sessionId).end(undefined); } catch (_) {}
       activeSockets.delete(sessionId);
     }
 
@@ -276,4 +272,3 @@ async function stopBot(sessionId) {
 }
 
 module.exports = { startBot, stopBot };
-
