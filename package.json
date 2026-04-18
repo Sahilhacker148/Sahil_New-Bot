@@ -1,14 +1,14 @@
 {
   "name": "sahil-804-bot",
   "version": "4.0.0",
-  "description": "SAHIL 804 BOT — WhatsApp SaaS Platform by Sahil Hacker 804",
+  "description": "SAHIL 804 BOT \u2014 WhatsApp SaaS Platform by Sahil Hacker 804",
   "main": "web/server.js",
   "scripts": {
     "start": "node web/server.js",
     "dev": "nodemon web/server.js"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "6.5.0",
+    "@whiskeysockets/baileys": "6.7.21",
     "firebase-admin": "^12.0.0",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
@@ -27,8 +27,7 @@
     "uuid": "^9.0.1",
     "ws": "^8.16.0",
     "multer": "^1.4.5-lts.1",
-    "connect-session-firestore": "^2.0.0",
-    "sharp": "0.30.7"
+    "sharp": "^0.33.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.3"
