@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — SAHIL 804 BOT</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #e0e5ec;
+  --shadow-dark: #c8ccd1;
+  --shadow-light: #ffffff;
+  --green: #25d366;
+  --green-dark: #128c7e;
+  --text: #2d3e50;
+  --muted: #6b7a8a;
+  --red: #ef4444;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:var(--bg); color:var(--text); font-family:'Poppins',sans-serif;
+  min-height:100vh; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; padding:20px;
+  opacity:0; animation:fadeIn 0.8s forwards 0.1s;
+}
+@keyframes fadeIn { to { opacity:1; } }
+
+.back-link {
+  position:fixed; top:20px; left:20px;
+  padding:8px 16px; border-radius:12px; text-decoration:none;
+  font-size:0.82rem; font-weight:600; color:var(--muted);
+  background:var(--bg);
+  box-shadow:4px 4px 8px var(--shadow-dark),-4px -4px 8px var(--shadow-light);
+  transition:all 0.2s;
+}
+.back-link:hover { color:var(--green-dark); }
+
+.box {
+  background:var(--bg);
+  box-shadow:14px 14px 28px var(--shadow-dark),-14px -14px 28px var(--shadow-light);
+  border-radius:28px; padding:40px 36px;
+  width:100%; max-width:420px;
+}
+
+.logo { text-align:center; margin-bottom:28px; }
+.logo-img-wrap { position:relative; display:inline-block; margin-bottom:14px; }
+.logo-img-wrap::before {
+  content:''; position:absolute; inset:-6px; border-radius:50%;
+  background:conic-gradient(var(--green),#4facfe,#a78bfa,var(--green));
+  animation:spinRing 3s linear infinite; z-index:0;
+}
+@keyframes spinRing { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.logo img {
+  width:72px; height:72px; border-radius:50%; border:4px solid var(--bg);
+  object-fit:cover; position:relative; z-index:1;
+  box-shadow:6px 6px 14px var(--shadow-dark),-6px -6px 14px var(--shadow-light);
+}
+.logo h2 { font-size:1.2rem; font-weight:800; color:var(--green-dark); }
+.logo p { color:var(--muted); font-size:0.85rem; margin-top:4px; }
+
+.tabs {
+  display:flex; gap:8px; margin-bottom:24px;
+  background:var(--bg); padding:6px; border-radius:16px;
+  box-shadow:inset 5px 5px 10px var(--shadow-dark),inset -5px -5px 10px var(--shadow-light);
+}
+.tab {
+  flex:1; padding:11px; text-align:center; border:none;
+  background:transparent; color:var(--muted);
+  border-radius:12px; cursor:pointer; font-family:'Poppins',sans-serif;
+  font-size:0.83rem; font-weight:600; transition:all 0.3s;
+}
+.tab.active {
+  background:var(--bg);
+  box-shadow:4px 4px 8px var(--shadow-dark),-4px -4px 8px var(--shadow-light);
+  color:var(--green-dark);
+}
+
+label { display:block; margin-bottom:6px; font-size:0.8rem; color:var(--muted); font-weight:600; }
+.input-wrap { margin-bottom:16px; }
+input[type=email], input[type=password] {
+  width:100%; padding:14px 18px;
+  background:var(--bg); border:none; border-radius:14px;
+  box-shadow:inset 5px 5px 10px var(--shadow-dark),inset -5px -5px 10px var(--shadow-light);
+  color:var(--text); font-size:0.95rem; font-family:'Poppins',sans-serif;
+  outline:none; transition:box-shadow 0.2s;
+}
+input:focus {
+  box-shadow:inset 3px 3px 6px var(--shadow-dark),inset -3px -3px 6px var(--shadow-light),0 0 0 2px rgba(37,211,102,0.35);
+}
+input::placeholder { color:var(--muted); }
+
+.btn {
+  width:100%; padding:15px; border:none; border-radius:14px;
+  font-size:1rem; font-weight:700; cursor:pointer;
+  font-family:'Poppins',sans-serif; transition:all 0.2s;
+}
+.btn-green {
+  background:linear-gradient(135deg,var(--green-dark),var(--green));
+  color:#fff; box-shadow:6px 6px 14px rgba(18,140,126,0.4),-4px -4px 10px var(--shadow-light);
+}
+.btn-green:hover { transform:translateY(-2px); box-shadow:8px 10px 20px rgba(18,140,126,0.4); }
+.btn-green:active { transform:translateY(0); }
+.btn-green:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+.msg {
+  padding:13px 16px; border-radius:14px; margin-bottom:16px;
+  font-size:0.88rem; display:none; text-align:center;
+}
+.msg.error {
+  background:var(--bg);
+  box-shadow:inset 4px 4px 8px rgba(239,68,68,0.1),inset -4px -4px 8px var(--shadow-light);
+  color:var(--red); border-left:4px solid var(--red);
+}
+.msg.success {
+  background:var(--bg);
+  box-shadow:inset 4px 4px 8px rgba(18,140,126,0.12),inset -4px -4px 8px var(--shadow-light);
+  color:var(--green-dark); border-left:4px solid var(--green);
+}
+
+.links { text-align:center; margin-top:20px; color:var(--muted); font-size:0.85rem; }
+.links a { color:var(--green-dark); text-decoration:none; font-weight:600; }
+
+.spinner {
+  display:inline-block; width:16px; height:16px;
+  border:3px solid rgba(255,255,255,0.3); border-top-color:#fff;
+  border-radius:50%; animation:spin 0.8s linear infinite;
+  vertical-align:middle; margin-right:6px;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+</style>
+</head>
+<body>
+
+<a href="/index.html" class="back-link">← Back</a>
+
+<div class="box">
+  <div class="logo">
+    <div class="logo-img-wrap">
+      <img src="https://i.ibb.co/b51SYm0X/IMG-20260408-WA0010.jpg" alt="Sahil Hacker">
+    </div>
+    <h2>🤖 SAHIL 804 BOT</h2>
+    <p>Welcome back! Please login.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="setTab('user')">User Login</button>
+    <button class="tab" onclick="setTab('admin')">Admin Login</button>
+  </div>
+
+  <div id="msg" class="msg"></div>
+
+  <div id="userForm">
+    <div class="input-wrap">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="your@email.com">
+    </div>
+    <div class="input-wrap">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="••••••••">
+    </div>
+    <button class="btn btn-green" id="loginBtn" onclick="login()">🔐 Login</button>
+    <div class="links"><p style="margin-top:16px">Don't have an account? <a href="/register.html">Register</a></p></div>
+  </div>
+
+  <div id="adminForm" style="display:none">
+    <div class="input-wrap">
+      <label>Admin Email</label>
+      <input type="email" id="adminEmail" placeholder="admin@email.com">
+    </div>
+    <div class="input-wrap">
+      <label>Admin Password</label>
+      <input type="password" id="adminPassword" placeholder="••••••••">
+    </div>
+    <button class="btn btn-green" id="adminBtn" onclick="adminLogin()">👑 Admin Login</button>
+  </div>
+</div>
+
+<script>
+function setTab(t) {
+  document.querySelectorAll('.tab').forEach((el,i) => {
+    el.classList.toggle('active', (i===0&&t==='user')||(i===1&&t==='admin'));
+  });
+  document.getElementById('userForm').style.display = t==='user'?'block':'none';
+  document.getElementById('adminForm').style.display = t==='admin'?'block':'none';
+  document.getElementById('msg').style.display = 'none';
+}
+function showMsg(text, type) {
+  const m = document.getElementById('msg');
+  m.textContent = text; m.className = 'msg '+type; m.style.display = 'block';
+}
+async function login() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  if (!email || !password) return showMsg('All fields are required.', 'error');
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Logging in...';
+  try {
+    const r = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password}) });
+    const d = await r.json();
+    if (d.error) { showMsg(d.error, 'error'); }
+    else { showMsg('✅ Login successful! Redirecting...', 'success'); setTimeout(()=>window.location.href=d.redirect,1000); }
+  } catch(e) { showMsg('❌ Server error. Please try again.', 'error'); }
+  btn.disabled = false; btn.innerHTML = '🔐 Login';
+}
+async function adminLogin() {
+  const email = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPassword').value;
+  if (!email || !password) return showMsg('All fields are required.', 'error');
+  const btn = document.getElementById('adminBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Logging in...';
+  try {
+    const r = await fetch('/api/auth/admin-login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password}) });
+    const d = await r.json();
+    if (d.error) { showMsg(d.error, 'error'); }
+    else { showMsg('✅ Admin login successful!', 'success'); setTimeout(()=>window.location.href=d.redirect,1000); }
+  } catch(e) { showMsg('❌ Server error. Please try again.', 'error'); }
+  btn.disabled = false; btn.innerHTML = '👑 Admin Login';
+}
+document.addEventListener('keydown', e => { if (e.key==='Enter') login(); });
+</script>
+</body>
+</html>

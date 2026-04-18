@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Admin SDK (server-side) bypasses all these rules ──
+    // These rules apply ONLY to client-side SDK access.
+    // Since this bot uses Admin SDK exclusively, all rules below
+    // are set to deny client access (extra security layer).
+
+    // Users collection
+    match /users/{userId} {
+      allow read, write: if false; // Admin SDK only
+    }
+
+    // Subscriptions
+    match /subscriptions/{userId} {
+      allow read, write: if false; // Admin SDK only
+    }
+
+    // Bot sessions
+    match /sessions/{sessionId} {
+      allow read, write: if false; // Admin SDK only
+    }
+
+    // Express sessions (connect-session-firestore)
+    match /express_sessions/{sessionId} {
+      allow read, write: if false; // Admin SDK only
+    }
+
+    // Settings
+    match /settings/{doc} {
+      allow read, write: if false; // Admin SDK only
+    }
+
+    // Announcements
+    match /announcements/{announcementId} {
+      allow read, write: if false; // Admin SDK only
+    }
+
+    // Default: deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

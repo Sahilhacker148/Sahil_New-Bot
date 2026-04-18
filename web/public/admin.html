@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — SAHIL 804 BOT</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #e0e5ec;
+  --shadow-dark: #c8ccd1;
+  --shadow-light: #ffffff;
+  --green: #25d366;
+  --green-dark: #128c7e;
+  --text: #2d3e50;
+  --muted: #6b7a8a;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --blue: #4facfe;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Poppins',sans-serif; min-height:100vh; opacity:0; animation:fadeIn 0.8s forwards 0.1s; }
+@keyframes fadeIn { to{opacity:1;} }
+
+nav {
+  background:var(--bg); padding:16px 32px;
+  display:flex; justify-content:space-between; align-items:center;
+  box-shadow:0 4px 12px var(--shadow-dark);
+  position:sticky; top:0; z-index:50;
+}
+.nav-logo { font-size:1.1rem; font-weight:800; color:var(--yellow); }
+.btn {
+  padding:9px 20px; border:none; border-radius:12px;
+  font-family:'Poppins',sans-serif; font-size:0.85rem; font-weight:700;
+  cursor:pointer; transition:all 0.2s; background:var(--bg);
+  box-shadow:5px 5px 10px var(--shadow-dark),-5px -5px 10px var(--shadow-light);
+  color:var(--text);
+}
+.btn-danger { background:linear-gradient(135deg,#c53030,var(--red)); color:#fff; box-shadow:5px 5px 12px rgba(239,68,68,0.35); }
+.btn-danger:hover { transform:translateY(-1px); }
+.btn-success { background:linear-gradient(135deg,#276749,var(--green)); color:#fff; box-shadow:5px 5px 12px rgba(18,140,126,0.35); }
+.btn-success:hover { transform:translateY(-1px); }
+.btn-primary { background:linear-gradient(135deg,var(--green-dark),var(--green)); color:#fff; box-shadow:5px 5px 12px rgba(18,140,126,0.4); }
+.btn-primary:hover { transform:translateY(-1px); }
+.btn-yellow { background:linear-gradient(135deg,#92400e,var(--yellow)); color:#fff; box-shadow:5px 5px 12px rgba(245,158,11,0.35); }
+
+.container { max-width:1200px; margin:0 auto; padding:28px 20px; }
+
+.stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
+.stat {
+  background:var(--bg);
+  box-shadow:8px 8px 16px var(--shadow-dark),-8px -8px 16px var(--shadow-light);
+  border-radius:20px; padding:20px; transition:all 0.2s;
+}
+.stat:hover { box-shadow:10px 10px 20px var(--shadow-dark),-10px -10px 20px var(--shadow-light); }
+.stat h3 { color:var(--muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+.stat .val { font-size:1.8rem; font-weight:800; color:var(--yellow); margin-top:6px; }
+
+.tabs {
+  display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap;
+  background:var(--bg); padding:8px; border-radius:18px;
+  box-shadow:inset 5px 5px 10px var(--shadow-dark),inset -5px -5px 10px var(--shadow-light);
+}
+.tab {
+  padding:11px 20px; border-radius:12px; cursor:pointer;
+  font-weight:600; font-size:0.85rem; color:var(--muted);
+  background:transparent; border:none; font-family:'Poppins',sans-serif;
+  transition:all 0.3s;
+}
+.tab.active {
+  background:var(--bg);
+  box-shadow:5px 5px 10px var(--shadow-dark),-5px -5px 10px var(--shadow-light);
+  color:var(--yellow);
+}
+
+.section {
+  background:var(--bg);
+  box-shadow:10px 10px 20px var(--shadow-dark),-10px -10px 20px var(--shadow-light);
+  border-radius:24px; padding:28px; display:none;
+}
+.section.active { display:block; }
+
+table { width:100%; border-collapse:collapse; font-size:0.88rem; }
+th { text-align:left; padding:12px 10px; color:var(--muted); border-bottom:2px solid rgba(0,0,0,0.07); font-weight:600; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; }
+td { padding:12px 10px; border-bottom:1px solid rgba(0,0,0,0.05); color:var(--text); vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:rgba(0,0,0,0.02); }
+
+.badge { padding:4px 12px; border-radius:20px; font-size:0.75rem; font-weight:700; }
+.badge-pending {
+  background:var(--bg);
+  box-shadow:inset 3px 3px 6px rgba(0,0,0,0.08),inset -3px -3px 6px var(--shadow-light);
+  color:var(--muted);
+}
+.badge-approved {
+  background:var(--bg);
+  box-shadow:inset 3px 3px 6px rgba(18,140,126,0.15),inset -3px -3px 6px var(--shadow-light);
+  color:var(--green-dark);
+}
+.badge-rejected {
+  background:var(--bg);
+  box-shadow:inset 3px 3px 6px rgba(239,68,68,0.12),inset -3px -3px 6px var(--shadow-light);
+  color:var(--red);
+}
+.badge-monthly {
+  background:var(--bg);
+  box-shadow:inset 3px 3px 6px rgba(18,140,126,0.12),inset -3px -3px 6px var(--shadow-light);
+  color:var(--green-dark);
+}
+.badge-yearly {
+  background:var(--bg);
+  box-shadow:inset 3px 3px 6px rgba(245,158,11,0.15),inset -3px -3px 6px var(--shadow-light);
+  color:var(--yellow);
+}
+.badge-free { background:var(--bg); box-shadow:inset 2px 2px 5px rgba(0,0,0,0.06),inset -2px -2px 5px var(--shadow-light); color:var(--muted); }
+
+.actions { display:flex; gap:6px; flex-wrap:wrap; }
+
+input.inp, select.inp {
+  width:100%; padding:13px 16px;
+  background:var(--bg); border:none; border-radius:14px;
+  box-shadow:inset 5px 5px 10px var(--shadow-dark),inset -5px -5px 10px var(--shadow-light);
+  color:var(--text); font-size:0.9rem; font-family:'Poppins',sans-serif;
+  outline:none; transition:box-shadow 0.2s; margin-bottom:12px;
+}
+input.inp:focus, select.inp:focus {
+  box-shadow:inset 3px 3px 6px var(--shadow-dark),inset -3px -3px 6px var(--shadow-light),0 0 0 2px rgba(245,158,11,0.35);
+}
+input.inp::placeholder { color:var(--muted); }
+
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+.sub-box {
+  background:var(--bg);
+  box-shadow:inset 6px 6px 12px var(--shadow-dark),inset -6px -6px 12px var(--shadow-light);
+  border-radius:18px; padding:20px; margin-bottom:24px;
+}
+.sub-box h3 { margin-bottom:16px; color:var(--yellow); font-size:1rem; }
+
+.msg { padding:12px 16px; border-radius:14px; margin-bottom:14px; display:none; font-size:0.88rem; }
+.msg.success {
+  background:var(--bg);
+  box-shadow:inset 4px 4px 8px rgba(18,140,126,0.12),inset -4px -4px 8px var(--shadow-light);
+  color:var(--green-dark); border-left:4px solid var(--green);
+}
+.msg.error {
+  background:var(--bg);
+  box-shadow:inset 4px 4px 8px rgba(239,68,68,0.1),inset -4px -4px 8px var(--shadow-light);
+  color:var(--red); border-left:4px solid var(--red);
+}
+
+.settings-box { max-width:600px; }
+.settings-box h3 { margin-bottom:20px; color:var(--yellow); font-size:1rem; }
+.settings-label { color:var(--muted); font-size:0.8rem; display:block; margin-bottom:6px; font-weight:600; }
+
+@media(max-width:768px){
+  nav{padding:14px 16px;}
+  .container{padding:20px 12px;}
+  .form-row{grid-template-columns:1fr;}
+  .nav-logo{font-size:0.95rem;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">👑 SAHIL 804 BOT — Admin Panel</div>
+  <button class="btn btn-danger" onclick="logout()">Logout</button>
+</nav>
+
+<div class="container">
+  <div class="stats">
+    <div class="stat"><h3>Total Users</h3><div class="val" id="totalUsers">—</div></div>
+    <div class="stat"><h3>Active Bots</h3><div class="val" id="activeBots">—</div></div>
+    <div class="stat"><h3>Pending</h3><div class="val" id="pendingCount">—</div></div>
+    <div class="stat"><h3>Monthly Subs</h3><div class="val" id="monthlySubs">—</div></div>
+    <div class="stat"><h3>Yearly Subs</h3><div class="val" id="yearlySubs">—</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('users', event)">👤 Users</button>
+    <button class="tab" onclick="showTab('bots', event)">🤖 Bots</button>
+    <button class="tab" onclick="showTab('subscriptions', event)">💎 Subscriptions</button>
+    <button class="tab" onclick="showTab('settings', event)">⚙️ Settings</button>
+  </div>
+
+  <!-- USERS TAB -->
+  <div class="section active" id="tab-users">
+    <div id="usersMsg" class="msg"></div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>WhatsApp</th><th>Status</th><th>Plan</th><th>Actions</th></tr></thead>
+        <tbody id="usersTable"><tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BOTS TAB -->
+  <div class="section" id="tab-bots">
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Session ID</th><th>WhatsApp</th><th>Status</th><th>Mode</th><th>Created</th><th>Actions</th></tr></thead>
+        <tbody id="botsTable"><tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SUBSCRIPTIONS TAB -->
+  <div class="section" id="tab-subscriptions">
+    <div id="subMsg" class="msg"></div>
+    <div class="sub-box">
+      <h3>Assign Subscription</h3>
+      <div class="form-row">
+        <div>
+          <label class="settings-label">User ID</label>
+          <input class="inp" id="subUserId" placeholder="Paste User ID from users table">
+        </div>
+        <div>
+          <label class="settings-label">Plan</label>
+          <select class="inp" id="subPlan">
+            <option value="monthly">Monthly (10 bots, 30 days)</option>
+            <option value="yearly">Yearly (Unlimited, 365 days)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-success" onclick="assignSub()">✅ Assign Subscription</button>
+      <button class="btn btn-danger" style="margin-left:8px" onclick="revokeSub()">❌ Revoke Subscription</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>User ID</th><th>Plan</th><th>Bots Used</th><th>Bots Allowed</th><th>Expiry</th><th>Status</th></tr></thead>
+        <tbody id="subsTable"><tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div class="section" id="tab-settings">
+    <div id="settingsMsg" class="msg"></div>
+    <div class="settings-box">
+      <h3>💳 Payment Settings</h3>
+      <label class="settings-label">JazzCash Number</label>
+      <input class="inp" id="jazzcash" placeholder="03XXXXXXXXX">
+      <label class="settings-label">Easypaisa Number</label>
+      <input class="inp" id="easypaisa" placeholder="03XXXXXXXXX">
+      <label class="settings-label">Monthly Price (PKR)</label>
+      <input class="inp" id="monthlyPrice" placeholder="500">
+      <label class="settings-label">Yearly Price (PKR)</label>
+      <input class="inp" id="yearlyPrice" placeholder="4000">
+      <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(name, e) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  if (e && e.target) e.target.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'users') loadUsers();
+  if (name === 'bots') loadBots();
+  if (name === 'subscriptions') loadSubs();
+  if (name === 'settings') loadSettings();
+}
+
+function showMsg(id, text, type) {
+  const m = document.getElementById(id);
+  m.textContent = text; m.className = 'msg ' + type; m.style.display = 'block';
+  setTimeout(() => m.style.display = 'none', 3000);
+}
+
+async function loadStats() {
+  const d = await fetch('/api/admin/stats').then(r => r.json());
+  document.getElementById('totalUsers').textContent = d.totalUsers || 0;
+  document.getElementById('activeBots').textContent = d.liveBots || 0;  document.getElementById('pendingCount').textContent = d.pendingApprovals || 0;
+  document.getElementById('monthlySubs').textContent = d.monthlySubscribers || 0;
+  document.getElementById('yearlySubs').textContent = d.yearlySubscribers || 0;
+}
+
+async function loadUsers() {
+  const d = await fetch('/api/admin/users').then(r => r.json());
+  const tb = document.getElementById('usersTable');
+  if (!d.users?.length) { tb.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px">No users found.</td></tr>'; return; }
+  tb.innerHTML = d.users.map(u => `
+    <tr>
+      <td style="font-weight:600">${u.name}</td>
+      <td style="font-size:0.83rem;color:var(--muted)">${u.email}</td>
+      <td style="font-size:0.83rem">+${u.whatsapp}</td>
+      <td><span class="badge badge-${u.status}">${u.status}</span></td>
+      <td><span class="badge badge-${u.plan}">${u.plan}</span></td>
+      <td>
+        <div class="actions">
+          ${u.status === 'pending' ? `<button class="btn btn-success" style="font-size:0.75rem;padding:5px 10px" onclick="approveUser('${u.id}')">Approve</button>` : ''}
+          ${u.status === 'pending' ? `<button class="btn btn-danger" style="font-size:0.75rem;padding:5px 10px" onclick="rejectUser('${u.id}')">Reject</button>` : ''}
+          <button class="btn" style="font-size:0.75rem;padding:5px 10px" onclick="copyId('${u.id}')">Copy ID</button>
+          <button class="btn btn-danger" style="font-size:0.75rem;padding:5px 10px" onclick="deleteUser('${u.id}')">Delete</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+async function loadBots() {
+  const d = await fetch('/api/admin/sessions').then(r => r.json());
+  const tb = document.getElementById('botsTable');
+  if (!d.sessions?.length) { tb.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px">No bots found.</td></tr>'; return; }
+  tb.innerHTML = d.sessions.map(s => `
+    <tr>
+      <td style="font-size:0.83rem;color:var(--muted)">${s.sessionId}</td>
+      <td>+${s.whatsappNumber}</td>
+      <td><span class="badge badge-${s.status === 'active' ? 'approved' : 'rejected'}">${s.status}</span></td>
+      <td>${s.mode || 'public'}</td>
+      <td style="font-size:0.8rem;color:var(--muted)">${s.createdAt ? new Date(s.createdAt._seconds*1000).toLocaleDateString() : '—'}</td>
+      <td><button class="btn btn-danger" style="font-size:0.75rem;padding:5px 10px" onclick="deleteBot('${s.sessionId}')">Revoke</button></td>
+    </tr>`).join('');
+}
+
+async function loadSubs() {
+  const d2 = await fetch('/api/admin/users').then(r => r.json());
+  const tb = document.getElementById('subsTable');
+  const paid = (d2.users || []).filter(u => u.plan !== 'free');
+  if (!paid.length) { tb.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px">No paid subscribers.</td></tr>'; return; }
+  tb.innerHTML = paid.map(u => `
+    <tr>
+      <td style="font-size:0.8rem;color:var(--muted)">${u.id}</td>
+      <td><span class="badge badge-${u.plan}">${u.plan}</span></td>
+      <td>${u.botsCreated || 0}</td>
+      <td>${u.botsAllowed || 0}</td>
+      <td style="font-size:0.83rem">${u.planExpiry ? new Date(u.planExpiry._seconds*1000).toLocaleDateString() : '—'}</td>
+      <td><span class="badge badge-approved">Active</span></td>
+    </tr>`).join('');
+}
+
+async function loadSettings() {
+  const d = await fetch('/api/admin/payment-settings').then(r => r.json());
+  document.getElementById('jazzcash').value = d.jazzcash || '';
+  document.getElementById('easypaisa').value = d.easypaisa || '';
+  document.getElementById('monthlyPrice').value = d.monthlyPrice || '';
+  document.getElementById('yearlyPrice').value = d.yearlyPrice || '';
+}
+
+async function approveUser(uid) {
+  await fetch(`/api/admin/users/${uid}/approve`, { method: 'POST' });
+  showMsg('usersMsg', 'User approved!', 'success');
+  loadUsers(); loadStats();
+}
+
+async function rejectUser(uid) {
+  if (!confirm('Reject and delete this user?')) return;
+  await fetch(`/api/admin/users/${uid}/reject`, { method: 'POST' });
+  showMsg('usersMsg', 'User rejected.', 'success');
+  loadUsers(); loadStats();
+}
+
+async function deleteUser(uid) {
+  if (!confirm('Permanently delete this user?')) return;
+  await fetch(`/api/admin/users/${uid}`, { method: 'DELETE' });
+  showMsg('usersMsg', 'User deleted.', 'success');
+  loadUsers(); loadStats();
+}
+
+async function deleteBot(sid) {
+  if (!confirm('Revoke this bot session?')) return;
+  await fetch(`/api/admin/sessions/${sid}`, { method: 'DELETE' });
+  loadBots(); loadStats();
+}
+
+async function assignSub() {
+  const uid = document.getElementById('subUserId').value.trim();
+  const plan = document.getElementById('subPlan').value;
+  if (!uid) return showMsg('subMsg', 'Enter User ID.', 'error');
+  const r = await fetch(`/api/admin/subscriptions/${uid}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan }) });
+  const d = await r.json();
+  showMsg('subMsg', d.error || 'Subscription assigned!', d.error ? 'error' : 'success');
+  loadSubs(); loadStats();
+}
+
+async function revokeSub() {
+  const uid = document.getElementById('subUserId').value.trim();
+  if (!uid) return showMsg('subMsg', 'Enter User ID.', 'error');
+  await fetch(`/api/admin/subscriptions/${uid}`, { method: 'DELETE' });
+  showMsg('subMsg', 'Subscription revoked.', 'success');
+  loadSubs(); loadStats();
+}
+
+async function saveSettings() {
+  const data = {
+    jazzcash: document.getElementById('jazzcash').value.trim(),
+    easypaisa: document.getElementById('easypaisa').value.trim(),
+    monthlyPrice: document.getElementById('monthlyPrice').value.trim(),
+    yearlyPrice: document.getElementById('yearlyPrice').value.trim(),
+  };
+  const r = await fetch('/api/admin/payment-settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  const d = await r.json();
+  showMsg('settingsMsg', d.error || 'Settings saved!', d.error ? 'error' : 'success');
+}
+
+function copyId(id) { navigator.clipboard.writeText(id); alert('User ID copied: ' + id); }
+
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/login.html';
+}
+
+// Init
+(async () => {
+  const r = await fetch('/api/auth/me');
+  const d = await r.json();
+  if (!d.isAdmin) return window.location.href = '/login.html';
+  loadStats();
+  loadUsers();
+})();
+</script>
+</body>
+</html>

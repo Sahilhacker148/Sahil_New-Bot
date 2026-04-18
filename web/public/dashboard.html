@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — SAHIL 804 BOT</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #e0e5ec;
+  --shadow-dark: #c8ccd1;
+  --shadow-light: #ffffff;
+  --green: #25d366;
+  --green-dark: #128c7e;
+  --text: #2d3e50;
+  --muted: #6b7a8a;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --blue: #4facfe;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Poppins',sans-serif; min-height:100vh; opacity:0; animation:fadeIn 0.8s forwards 0.1s; }
+@keyframes fadeIn { to{opacity:1;} }
+
+nav {
+  background:var(--bg); padding:16px 32px;
+  display:flex; justify-content:space-between; align-items:center;
+  box-shadow:0 4px 12px var(--shadow-dark);
+  position:sticky; top:0; z-index:50;
+}
+.nav-logo { font-size:1.2rem; font-weight:800; color:var(--green-dark); }
+.nav-right { display:flex; align-items:center; gap:12px; }
+.user-info {
+  background:var(--bg);
+  box-shadow:4px 4px 8px var(--shadow-dark),-4px -4px 8px var(--shadow-light);
+  padding:7px 16px; border-radius:12px; font-size:0.83rem; color:var(--muted); font-weight:600;
+}
+.btn {
+  padding:9px 20px; border:none; border-radius:12px;
+  font-family:'Poppins',sans-serif; font-size:0.85rem; font-weight:700;
+  cursor:pointer; transition:all 0.2s;
+  background:var(--bg);
+  box-shadow:5px 5px 10px var(--shadow-dark),-5px -5px 10px var(--shadow-light);
+  color:var(--text);
+}
+.btn-green { background:linear-gradient(135deg,var(--green-dark),var(--green)); color:#fff; box-shadow:5px 5px 12px rgba(18,140,126,0.4); }
+.btn-green:hover { transform:translateY(-1px); }
+.btn-danger { background:linear-gradient(135deg,#c53030,var(--red)); color:#fff; box-shadow:5px 5px 12px rgba(239,68,68,0.35); }
+.btn-danger:hover { transform:translateY(-1px); }
+.btn-warning { background:linear-gradient(135deg,#b7791f,var(--yellow)); color:#fff; box-shadow:5px 5px 12px rgba(245,158,11,0.35); }
+.btn-warning:hover { transform:translateY(-1px); }
+.btn-ghost { color:var(--muted); }
+.btn-ghost:hover { color:var(--text); }
+.btn-sm { padding:6px 12px; font-size:0.78rem; border-radius:10px; }
+
+.container { max-width:1100px; margin:0 auto; padding:32px 20px; }
+
+.stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:28px; }
+.stat {
+  background:var(--bg);
+  box-shadow:8px 8px 16px var(--shadow-dark),-8px -8px 16px var(--shadow-light);
+  border-radius:20px; padding:24px; transition:all 0.2s;
+}
+.stat:hover { box-shadow:10px 10px 20px var(--shadow-dark),-10px -10px 20px var(--shadow-light); }
+.stat h3 { color:var(--muted); font-size:0.78rem; text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+.stat .val { font-size:2rem; font-weight:800; color:var(--green-dark); margin-top:8px; }
+
+.announcement-banner {
+  display:none; margin-bottom:24px; padding:16px 20px;
+  background:var(--bg);
+  box-shadow:inset 5px 5px 10px rgba(18,140,126,0.12),inset -5px -5px 10px var(--shadow-light);
+  border-left:4px solid var(--green); border-radius:16px;
+  color:var(--green-dark); line-height:1.6; font-size:0.9rem;
+}
+
+.section {
+  background:var(--bg);
+  box-shadow:10px 10px 20px var(--shadow-dark),-10px -10px 20px var(--shadow-light);
+  border-radius:24px; padding:28px; margin-bottom:24px;
+}
+.section h2 { font-size:1.1rem; font-weight:700; margin-bottom:20px; color:var(--text); display:flex; align-items:center; gap:8px; }
+
+.bot-card {
+  background:var(--bg);
+  box-shadow:6px 6px 12px var(--shadow-dark),-6px -6px 12px var(--shadow-light);
+  border-radius:18px; padding:18px; margin-bottom:14px; transition:all 0.2s;
+}
+.bot-card:hover { box-shadow:8px 8px 16px var(--shadow-dark),-8px -8px 16px var(--shadow-light); }
+.bot-card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+.bot-info h4 { margin-bottom:4px; font-size:1rem; font-weight:700; }
+.bot-info p { color:var(--muted); font-size:0.82rem; margin-top:3px; }
+.bot-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.bot-card-bottom { display:flex; align-items:center; gap:10px; margin-top:14px; padding-top:14px; border-top:1px solid rgba(0,0,0,0.07); flex-wrap:wrap; }
+
+.status { padding:5px 12px; border-radius:20px; font-size:0.78rem; font-weight:700; }
+.status-active {
+  background:var(--bg);
+  box-shadow:inset 3px 3px 6px rgba(18,140,126,0.15),inset -3px -3px 6px var(--shadow-light);
+  color:var(--green-dark);
+}
+.status-inactive {
+  background:var(--bg);
+  box-shadow:inset 3px 3px 6px rgba(0,0,0,0.08),inset -3px -3px 6px var(--shadow-light);
+  color:var(--muted);
+}
+
+.mode-badge {
+  padding:5px 14px; border-radius:20px; font-size:0.78rem; font-weight:700;
+  cursor:pointer; border:none; font-family:'Poppins',sans-serif;
+  transition:all 0.2s;
+}
+.mode-public {
+  background:var(--bg);
+  box-shadow:3px 3px 8px rgba(79,172,254,0.2),-3px -3px 8px var(--shadow-light);
+  color:#3b82f6;
+}
+.mode-public:hover { box-shadow:4px 4px 10px rgba(79,172,254,0.35); }
+.mode-private {
+  background:var(--bg);
+  box-shadow:3px 3px 8px rgba(167,139,250,0.2),-3px -3px 8px var(--shadow-light);
+  color:#7c3aed;
+}
+.mode-private:hover { box-shadow:4px 4px 10px rgba(167,139,250,0.35); }
+
+.upgrade-banner {
+  margin-top:16px; padding:18px 20px;
+  background:var(--bg);
+  box-shadow:inset 5px 5px 10px rgba(245,158,11,0.1),inset -5px -5px 10px var(--shadow-light);
+  border-left:4px solid var(--yellow); border-radius:16px;
+  font-size:0.9rem;
+}
+.upgrade-banner a { color:var(--green-dark); font-weight:700; text-decoration:none; }
+
+.modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center; }
+.modal.show { display:flex; }
+.modal-box {
+  background:var(--bg);
+  box-shadow:16px 16px 32px var(--shadow-dark),-16px -16px 32px var(--shadow-light);
+  border-radius:28px; padding:36px; max-width:500px; width:90%; max-height:90vh; overflow-y:auto;
+}
+.modal-box h3 { margin-bottom:20px; color:var(--green-dark); font-size:1.2rem; font-weight:800; }
+
+.tab-btns { display:flex; gap:8px; margin-bottom:24px; background:var(--bg); padding:6px; border-radius:14px; box-shadow:inset 4px 4px 8px var(--shadow-dark),inset -4px -4px 8px var(--shadow-light); }
+.tab-btn { flex:1; padding:10px; border:none; background:transparent; color:var(--muted); border-radius:10px; cursor:pointer; font-family:'Poppins',sans-serif; font-size:0.85rem; font-weight:600; transition:all 0.3s; }
+.tab-btn.active { background:var(--bg); box-shadow:4px 4px 8px var(--shadow-dark),-4px -4px 8px var(--shadow-light); color:var(--green-dark); }
+
+#qrBox { text-align:center; padding:10px; }
+#qrBox img { max-width:220px; border-radius:16px; box-shadow:6px 6px 14px var(--shadow-dark),-6px -6px 14px var(--shadow-light); }
+
+input.inp {
+  width:100%; padding:14px 18px; background:var(--bg); border:none; border-radius:14px;
+  box-shadow:inset 5px 5px 10px var(--shadow-dark),inset -5px -5px 10px var(--shadow-light);
+  color:var(--text); font-size:0.95rem; font-family:'Poppins',sans-serif; outline:none; transition:box-shadow 0.2s; margin-bottom:14px;
+}
+input.inp:focus { box-shadow:inset 3px 3px 6px var(--shadow-dark),inset -3px -3px 6px var(--shadow-light),0 0 0 2px rgba(37,211,102,0.35); }
+input.inp::placeholder { color:var(--muted); }
+
+.pair-code-display {
+  background:var(--bg);
+  box-shadow:inset 6px 6px 14px var(--shadow-dark),inset -6px -6px 14px var(--shadow-light);
+  border-radius:16px; padding:24px; text-align:center; margin:16px 0;
+  font-size:2.4rem; letter-spacing:10px; font-weight:800; color:var(--green-dark); font-family:monospace;
+}
+
+.progress { background:var(--bg); box-shadow:inset 4px 4px 8px var(--shadow-dark),inset -4px -4px 8px var(--shadow-light); border-radius:20px; height:10px; overflow:hidden; margin:14px 0; }
+.progress-bar { height:100%; background:linear-gradient(90deg,var(--green-dark),var(--green)); animation:prog 2s ease-in-out infinite alternate; border-radius:20px; }
+@keyframes prog { from{width:20%} to{width:80%} }
+
+.empty-state { text-align:center; padding:40px 20px; color:var(--muted); }
+.empty-state .icon { font-size:3rem; margin-bottom:12px; }
+
+code {
+  background:var(--bg);
+  box-shadow:inset 2px 2px 5px var(--shadow-dark),inset -2px -2px 5px var(--shadow-light);
+  padding:3px 8px; border-radius:8px; font-size:0.82rem; color:var(--green-dark);
+}
+
+.toast {
+  position:fixed; bottom:24px; right:24px;
+  background:var(--bg);
+  box-shadow:10px 10px 24px var(--shadow-dark),-10px -10px 24px var(--shadow-light);
+  padding:13px 22px; border-radius:20px;
+  color:var(--green-dark); font-weight:700; font-size:0.9rem;
+  z-index:999; opacity:0; transition:opacity 0.3s; pointer-events:none;
+}
+.toast.show { opacity:1; }
+.toast.error { color:var(--red); }
+
+@media(max-width:600px){
+  nav{padding:12px 16px;}
+  .container{padding:20px 12px;}
+  .bot-card-top{flex-direction:column;}
+  .nav-logo{font-size:1rem;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">🤖 SAHIL 804 BOT</div>
+  <div class="nav-right">
+    <span class="user-info" id="userName">Loading...</span>
+    <button class="btn btn-danger" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="stats">
+    <div class="stat"><h3>Plan</h3><div class="val" id="statPlan">Free</div></div>
+    <div class="stat"><h3>Bots Created</h3><div class="val" id="statBots">0</div></div>
+    <div class="stat"><h3>Bots Allowed</h3><div class="val" id="statAllowed">0</div></div>
+    <div class="stat"><h3>Plan Expiry</h3><div class="val" id="statExpiry" style="font-size:1rem;padding-top:8px">—</div></div>
+  </div>
+
+  <div id="announcementBanner" class="announcement-banner"></div>
+
+  <div class="section">
+    <h2>🤖 My Bots</h2>
+    <div id="botsList"><p style="color:var(--muted)">Loading bots...</p></div>
+    <button class="btn btn-green" id="createBotBtn" onclick="openDeploy()" style="margin-top:16px;display:none">➕ Create New Bot</button>
+    <div id="upgradeBanner" class="upgrade-banner" style="display:none">
+      <p>💎 Upgrade your plan to create bots. <a href="#" onclick="showPayment()">Buy a Plan →</a></p>
+    </div>
+  </div>
+
+  <div class="section" id="paymentSection" style="display:none">
+    <h2>💳 Buy a Plan</h2>
+    <div id="paymentInfo"><p style="color:var(--muted)">Loading payment info...</p></div>
+  </div>
+</div>
+
+<!-- Deploy Modal -->
+<div class="modal" id="deployModal">
+  <div class="modal-box">
+    <h3>🚀 Create New Bot</h3>
+    <div class="tab-btns">
+      <button class="tab-btn active" onclick="setDeployTab('qr')">📱 QR Code</button>
+      <button class="tab-btn" onclick="setDeployTab('pair')">🔢 Pair Code</button>
+    </div>
+
+    <div id="qrTab">
+      <p style="color:var(--muted);margin-bottom:16px;font-size:0.88rem">Open WhatsApp → Linked Devices → Link a Device, then scan the QR code.</p>
+      <div id="qrBox"><button class="btn btn-green" style="width:100%" onclick="startQR()">Generate QR Code</button></div>
+    </div>
+
+    <div id="pairTab" style="display:none">
+      <p style="color:var(--muted);margin-bottom:12px;font-size:0.88rem">Enter your WhatsApp number to receive a pairing code.</p>
+      <input class="inp" id="phoneInput" placeholder="923711158307 (country code, no +)">
+      <button class="btn btn-green" style="width:100%" onclick="startPair()">Get Pair Code</button>
+      <div id="pairResult" style="margin-top:16px;display:none">
+        <p style="color:var(--muted);margin-bottom:8px;text-align:center;font-size:0.85rem">Enter this code in WhatsApp → Linked Devices → Link with phone number:</p>
+        <div id="pairCodeText" class="pair-code-display">----</div>
+        <p style="color:var(--muted);font-size:0.8rem;margin-top:8px;text-align:center">⏳ Code expires in ~60 seconds</p>
+      </div>
+    </div>
+
+    <div id="connectingMsg" style="display:none;text-align:center;padding:20px">
+      <div style="font-size:2rem">⏳</div>
+      <p style="color:var(--muted);margin-top:8px;font-size:0.9rem">Waiting for WhatsApp connection...</p>
+      <div class="progress"><div class="progress-bar"></div></div>
+    </div>
+
+    <div id="successMsg" style="display:none;text-align:center;padding:20px">
+      <div style="font-size:2.5rem">✅</div>
+      <p style="color:var(--green-dark);font-size:1.2rem;font-weight:700;margin-top:8px">Bot Connected Successfully!</p>
+      <p style="color:var(--muted);margin-top:8px" id="connectedNumber"></p>
+      <p style="color:var(--muted);font-size:0.85rem;margin-top:6px">Your bot is now live. Type <code>.menu</code> on WhatsApp to start.</p>
+    </div>
+
+    <button class="btn btn-ghost" style="width:100%;margin-top:20px" onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let user = null, ws = null, currentSessionId = null;
+
+async function init() {
+  try {
+    const r = await fetch('/api/auth/me');
+    const d = await r.json();
+    if (d.error) return (window.location.href = '/login.html');
+    user = d;
+    document.getElementById('userName').textContent = d.name || d.email;
+    document.getElementById('statPlan').textContent = (d.plan || 'free').toUpperCase();
+    document.getElementById('statBots').textContent = d.botsCreated || 0;
+    document.getElementById('statAllowed').textContent = d.botsAllowed || 0;
+    if (d.planExpiry) {
+      const exp = new Date(d.planExpiry._seconds * 1000);
+      document.getElementById('statExpiry').textContent = exp.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    await loadBots();
+    await checkSubscription();
+    await loadAnnouncement();
+  } catch (e) {
+    window.location.href = '/login.html';
+  }
+}
+
+async function checkSubscription() {
+  const r = await fetch('/api/user/subscription');
+  const d = await r.json();
+  if (d.active) {
+    document.getElementById('createBotBtn').style.display = 'inline-block';
+  } else {
+    document.getElementById('upgradeBanner').style.display = 'block';
+  }
+}
+
+async function loadAnnouncement() {
+  try {
+    const r = await fetch('/api/announcement');
+    const d = await r.json();
+    if (d.announcement) {
+      const el = document.getElementById('announcementBanner');
+      el.innerHTML = `📢 <strong>${d.announcement.title}:</strong> ${d.announcement.message}`;
+      el.style.display = 'block';
+    }
+  } catch (_) {}
+}
+
+async function loadBots() {
+  const r = await fetch('/api/user/bots');
+  const d = await r.json();
+  const list = document.getElementById('botsList');
+  if (!d.bots || !d.bots.length) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">🤖</div><p>No bots yet. Create your first bot above!</p></div>`;
+    return;
+  }
+  list.innerHTML = d.bots.map(b => {
+    const created = b.createdAt ? new Date(b.createdAt._seconds * 1000).toLocaleDateString('en-GB') : 'N/A';
+    const lastActive = b.lastActive ? new Date(b.lastActive._seconds * 1000).toLocaleString('en-GB') : 'Never';
+    const isOnline = b.isLive && b.status === 'active';
+    const mode = b.mode || 'public';
+    return `
+    <div class="bot-card">
+      <div class="bot-card-top">
+        <div class="bot-info">
+          <h4>📱 +${b.whatsappNumber || 'Unknown'}</h4>
+          <p>Session: <code>${b.sessionId}</code></p>
+          <p>Created: ${created} &nbsp;|&nbsp; Last Active: ${lastActive}</p>
+          <p>Messages handled: ${b.messageCount || 0}</p>
+        </div>
+        <div class="bot-actions">
+          <span class="status status-${isOnline ? 'active' : 'inactive'}">${isOnline ? '🟢 Online' : '🔴 Offline'}</span>
+          <button class="btn btn-warning btn-sm" onclick="restartBot('${b.sessionId}')">🔄 Restart</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteBot('${b.sessionId}')">🗑️ Delete</button>
+        </div>
+      </div>
+      <div class="bot-card-bottom">
+        <span style="color:var(--muted);font-size:0.8rem">Mode:</span>
+        <button class="mode-badge mode-${mode}" onclick="toggleMode('${b.sessionId}','${mode}')" title="Click to toggle between Public and Private mode">
+          ${mode === 'private' ? '🔒 PRIVATE' : '🌐 PUBLIC'}
+        </button>
+        <span style="color:var(--muted);font-size:0.76rem">(click to toggle)</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleMode(sessionId, currentMode) {
+  const newMode = currentMode === 'public' ? 'private' : 'public';
+  try {
+    const r = await fetch('/api/bot/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, mode: newMode }),
+    });
+    const d = await r.json();
+    if (d.error) return showToast(d.error, true);
+    showToast(`Mode switched to ${newMode.toUpperCase()} ✅`);
+    await loadBots();
+  } catch (_) {
+    showToast('Failed to toggle mode. Try again.', true);
+  }
+}
+
+async function restartBot(sessionId) {
+  if (!confirm('Restart this bot? It will briefly go offline then reconnect automatically.')) return;
+  try {
+    const r = await fetch('/api/bot/restart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId }),
+    });
+    const d = await r.json();
+    if (d.error) return showToast(d.error, true);
+    showToast('Bot is restarting... ⏳');
+    setTimeout(loadBots, 5000);
+  } catch (_) {
+    showToast('Failed to restart bot.', true);
+  }
+}
+
+async function deleteBot(sessionId) {
+  if (!confirm('Permanently delete this bot? This cannot be undone.')) return;
+  try {
+    const r = await fetch('/api/bot/' + sessionId, { method: 'DELETE' });
+    const d = await r.json();
+    if (d.error) return showToast(d.error, true);
+    showToast('Bot deleted. 🗑️');
+    await loadBots();
+  } catch (_) {
+    showToast('Failed to delete bot.', true);
+  }
+}
+
+function openDeploy() {
+  document.getElementById('deployModal').classList.add('show');
+  document.getElementById('qrBox').innerHTML = '<button class="btn btn-green" style="width:100%" onclick="startQR()">Generate QR Code</button>';
+  document.getElementById('pairResult').style.display = 'none';
+  document.getElementById('pairCodeText').textContent = '----';
+  document.getElementById('connectingMsg').style.display = 'none';
+  document.getElementById('successMsg').style.display = 'none';
+  document.getElementById('phoneInput').value = '';
+}
+
+function closeModal() {
+  document.getElementById('deployModal').classList.remove('show');
+  if (ws) { ws.close(); ws = null; }
+  currentSessionId = null;
+}
+
+function setDeployTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', (i === 0) === (tab === 'qr'));
+  });
+  document.getElementById('qrTab').style.display = tab === 'qr' ? 'block' : 'none';
+  document.getElementById('pairTab').style.display = tab === 'pair' ? 'block' : 'none';
+}
+
+async function startQR() {
+  document.getElementById('qrBox').innerHTML = '<p style="color:var(--muted);text-align:center">⏳ Generating QR code, please wait...</p>';
+  try {
+    const r = await fetch('/api/bot/start-qr', { method: 'POST' });
+    const d = await r.json();
+    if (d.error) { document.getElementById('qrBox').innerHTML = `<p style="color:var(--red)">❌ ${d.error}</p>`; return; }
+    currentSessionId = d.sessionId;
+    document.getElementById('connectingMsg').style.display = 'block';
+    openWS(currentSessionId);
+  } catch (_) {
+    document.getElementById('qrBox').innerHTML = '<p style="color:var(--red)">❌ Failed to start. Please try again.</p>';
+  }
+}
+
+async function startPair() {
+  const phone = document.getElementById('phoneInput').value.trim().replace(/[^0-9]/g, '');
+  if (!phone || phone.length < 10) return showToast('Enter a valid phone number (10–15 digits, no +)', true);
+  try {
+    const r = await fetch('/api/bot/start-pair', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phoneNumber: phone }),
+    });
+    const d = await r.json();
+    if (d.error) return showToast(d.error, true);
+    currentSessionId = d.sessionId;
+    document.getElementById('connectingMsg').style.display = 'block';
+    openWS(currentSessionId);
+  } catch (_) {
+    showToast('Failed to start pairing. Try again.', true);
+  }
+}
+
+function openWS(sid) {
+  if (ws) ws.close();
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}/ws?sessionId=${sid}`);
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'qr') {
+      document.getElementById('connectingMsg').style.display = 'none';
+      document.getElementById('qrBox').innerHTML =
+        `<img src="${msg.qr}" alt="QR Code" /><p style="color:var(--muted);margin-top:12px;font-size:0.85rem">Scan with WhatsApp → Linked Devices</p>`;
+    } else if (msg.type === 'pairCode') {
+      document.getElementById('connectingMsg').style.display = 'none';
+      document.getElementById('pairResult').style.display = 'block';
+      document.getElementById('pairCodeText').textContent = msg.code;
+    } else if (msg.type === 'pairError') {
+      showToast('❌ ' + msg.error, true);
+      document.getElementById('connectingMsg').style.display = 'none';
+    } else if (msg.type === 'connected') {
+      document.getElementById('qrBox').innerHTML = '';
+      document.getElementById('pairResult').style.display = 'none';
+      document.getElementById('connectingMsg').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+      document.getElementById('connectedNumber').textContent = 'Connected as: +' + msg.number;
+      loadBots();
+      if (ws) { ws.close(); ws = null; }
+    } else if (msg.type === 'disconnected') {
+      showToast('Bot disconnected from WhatsApp.', true);
+    }
+  };
+  ws.onerror = () => showToast('Connection error. Please refresh and try again.', true);
+}
+
+async function showPayment() {
+  const sec = document.getElementById('paymentSection');
+  sec.style.display = 'block';
+  sec.scrollIntoView({ behavior: 'smooth' });
+  try {
+    const r = await fetch('/api/payment-info');
+    const d = await r.json();
+    document.getElementById('paymentInfo').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+        <div style="background:var(--bg);box-shadow:6px 6px 12px var(--shadow-dark),-6px -6px 12px var(--shadow-light);border-radius:16px;padding:20px;">
+          <h4 style="color:var(--green-dark);margin-bottom:8px">📅 Monthly Plan</h4>
+          <div style="font-size:2rem;font-weight:800;color:var(--green-dark)">₨${d.monthlyPrice}</div>
+          <p style="color:var(--muted);font-size:0.85rem;margin-top:4px">Up to 10 bots • 30 days</p>
+        </div>
+        <div style="background:var(--bg);box-shadow:6px 6px 12px var(--shadow-dark),-6px -6px 12px var(--shadow-light);border-radius:16px;padding:20px;">
+          <h4 style="color:var(--yellow);margin-bottom:8px">⭐ Yearly Plan</h4>
+          <div style="font-size:2rem;font-weight:800;color:var(--yellow)">₨${d.yearlyPrice}</div>
+          <p style="color:var(--muted);font-size:0.85rem;margin-top:4px">Unlimited bots • 365 days</p>
+        </div>
+      </div>
+      <div style="background:var(--bg);box-shadow:inset 5px 5px 10px rgba(18,140,126,0.1),inset -5px -5px 10px var(--shadow-light);border-radius:16px;padding:20px;">
+        <p style="color:var(--green-dark);font-weight:700;margin-bottom:12px">💳 Payment Methods:</p>
+        <p>📱 <strong>JazzCash:</strong> <span style="color:var(--green-dark)">${d.jazzcash}</span></p>
+        <p style="margin-top:6px">📱 <strong>Easypaisa:</strong> <span style="color:var(--green-dark)">${d.easypaisa}</span></p>
+        <p style="margin-top:12px;color:var(--muted);font-size:0.9rem">${d.instructions || ''}</p>
+        <p style="margin-top:10px;font-size:0.9rem">After payment, send screenshot on WhatsApp:
+          <a href="https://wa.me/923496049312" target="_blank" style="color:var(--green-dark);font-weight:600">wa.me/923496049312</a>
+        </p>
+      </div>`;
+  } catch (_) {
+    document.getElementById('paymentInfo').innerHTML = '<p style="color:var(--muted)">Failed to load. Please refresh and try again.</p>';
+  }
+}
+
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/login.html';
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register — SAHIL 804 BOT</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #e0e5ec;
+  --shadow-dark: #c8ccd1;
+  --shadow-light: #ffffff;
+  --green: #25d366;
+  --green-dark: #128c7e;
+  --text: #2d3e50;
+  --muted: #6b7a8a;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:var(--bg); color:var(--text); font-family:'Poppins',sans-serif;
+  min-height:100vh; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; padding:20px;
+  opacity:0; animation:fadeIn 0.8s forwards 0.1s;
+}
+@keyframes fadeIn { to { opacity:1; } }
+
+.back-link {
+  position:fixed; top:20px; left:20px;
+  padding:8px 16px; border-radius:12px; text-decoration:none;
+  font-size:0.82rem; font-weight:600; color:var(--muted);
+  background:var(--bg);
+  box-shadow:4px 4px 8px var(--shadow-dark),-4px -4px 8px var(--shadow-light);
+  transition:all 0.2s;
+}
+.back-link:hover { color:var(--green-dark); }
+
+.box {
+  background:var(--bg);
+  box-shadow:14px 14px 28px var(--shadow-dark),-14px -14px 28px var(--shadow-light);
+  border-radius:28px; padding:40px 36px;
+  width:100%; max-width:440px;
+}
+
+.logo { text-align:center; margin-bottom:24px; }
+.logo-img-wrap { position:relative; display:inline-block; margin-bottom:14px; }
+.logo-img-wrap::before {
+  content:''; position:absolute; inset:-6px; border-radius:50%;
+  background:conic-gradient(var(--green),#4facfe,#a78bfa,var(--green));
+  animation:spinRing 3s linear infinite; z-index:0;
+}
+@keyframes spinRing { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.logo img {
+  width:70px; height:70px; border-radius:50%; border:4px solid var(--bg);
+  object-fit:cover; position:relative; z-index:1;
+  box-shadow:6px 6px 14px var(--shadow-dark),-6px -6px 14px var(--shadow-light);
+}
+.logo h2 { font-size:1.2rem; font-weight:800; color:var(--green-dark); }
+
+.notice {
+  background:var(--bg);
+  box-shadow:inset 4px 4px 8px rgba(245,158,11,0.12),inset -4px -4px 8px var(--shadow-light);
+  border-left:4px solid var(--yellow);
+  border-radius:14px; padding:12px 16px; margin-bottom:20px;
+  font-size:0.83rem; color:var(--muted); line-height:1.5;
+}
+.notice strong { color:var(--yellow); }
+
+label { display:block; margin-bottom:6px; font-size:0.8rem; color:var(--muted); font-weight:600; }
+.input-wrap { margin-bottom:14px; }
+input[type=text], input[type=email], input[type=password] {
+  width:100%; padding:14px 18px;
+  background:var(--bg); border:none; border-radius:14px;
+  box-shadow:inset 5px 5px 10px var(--shadow-dark),inset -5px -5px 10px var(--shadow-light);
+  color:var(--text); font-size:0.95rem; font-family:'Poppins',sans-serif;
+  outline:none; transition:box-shadow 0.2s;
+}
+input:focus {
+  box-shadow:inset 3px 3px 6px var(--shadow-dark),inset -3px -3px 6px var(--shadow-light),0 0 0 2px rgba(37,211,102,0.35);
+}
+input::placeholder { color:var(--muted); }
+
+.btn {
+  width:100%; padding:15px; border:none; border-radius:14px;
+  font-size:1rem; font-weight:700; cursor:pointer;
+  font-family:'Poppins',sans-serif; transition:all 0.2s;
+}
+.btn-green {
+  background:linear-gradient(135deg,var(--green-dark),var(--green));
+  color:#fff; box-shadow:6px 6px 14px rgba(18,140,126,0.4),-4px -4px 10px var(--shadow-light);
+}
+.btn-green:hover { transform:translateY(-2px); box-shadow:8px 10px 20px rgba(18,140,126,0.4); }
+.btn-green:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+.msg {
+  padding:13px 16px; border-radius:14px; margin-bottom:16px;
+  font-size:0.88rem; display:none; text-align:center;
+}
+.msg.error {
+  background:var(--bg);
+  box-shadow:inset 4px 4px 8px rgba(239,68,68,0.1),inset -4px -4px 8px var(--shadow-light);
+  color:var(--red); border-left:4px solid var(--red);
+}
+.msg.success {
+  background:var(--bg);
+  box-shadow:inset 4px 4px 8px rgba(18,140,126,0.12),inset -4px -4px 8px var(--shadow-light);
+  color:var(--green-dark); border-left:4px solid var(--green);
+}
+
+.links { text-align:center; margin-top:18px; color:var(--muted); font-size:0.85rem; }
+.links a { color:var(--green-dark); text-decoration:none; font-weight:600; }
+
+.spinner {
+  display:inline-block; width:16px; height:16px;
+  border:3px solid rgba(255,255,255,0.3); border-top-color:#fff;
+  border-radius:50%; animation:spin 0.8s linear infinite;
+  vertical-align:middle; margin-right:6px;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+</style>
+</head>
+<body>
+
+<a href="/index.html" class="back-link">← Back</a>
+
+<div class="box">
+  <div class="logo">
+    <div class="logo-img-wrap">
+      <img src="https://i.ibb.co/b51SYm0X/IMG-20260408-WA0010.jpg" alt="Sahil Hacker">
+    </div>
+    <h2>🤖 Create Account</h2>
+  </div>
+
+  <div class="notice">
+    ⚠️ After registration, your account needs <strong>admin approval</strong> before you can login and use the bot.
+  </div>
+
+  <div id="msg" class="msg"></div>
+
+  <div class="input-wrap">
+    <label>Full Name</label>
+    <input type="text" id="name" placeholder="Your full name">
+  </div>
+  <div class="input-wrap">
+    <label>Email</label>
+    <input type="email" id="email" placeholder="your@email.com">
+  </div>
+  <div class="input-wrap">
+    <label>WhatsApp Number (with country code)</label>
+    <input type="text" id="whatsapp" placeholder="923001234567">
+  </div>
+  <div class="input-wrap">
+    <label>Password (min 6 characters)</label>
+    <input type="password" id="password" placeholder="••••••••">
+  </div>
+
+  <button class="btn btn-green" id="regBtn" onclick="register()">🚀 Create Account</button>
+
+  <div class="links">
+    <p style="margin-top:14px">Already have an account? <a href="/login.html">Login</a></p>
+  </div>
+</div>
+
+<script>
+function showMsg(text, type) {
+  const m = document.getElementById('msg');
+  m.textContent = text; m.className = 'msg '+type; m.style.display = 'block';
+}
+async function register() {
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const whatsapp = document.getElementById('whatsapp').value.trim().replace(/[^0-9]/g,'');
+  const password = document.getElementById('password').value;
+  if (!name||!email||!whatsapp||!password) return showMsg('All fields are required.', 'error');
+  if (password.length < 6) return showMsg('Password must be at least 6 characters.', 'error');
+  if (whatsapp.length < 10) return showMsg('Enter a valid WhatsApp number with country code.', 'error');
+  const btn = document.getElementById('regBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Creating account...';
+  try {
+    const r = await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name,email,whatsapp,password}) });
+    const d = await r.json();
+    if (d.error) { showMsg('❌ ' + d.error, 'error'); }
+    else { showMsg('✅ ' + d.message, 'success'); setTimeout(()=>window.location.href='/login.html',3000); }
+  } catch(e) { showMsg('❌ Server error. Please try again.', 'error'); }
+  btn.disabled = false; btn.innerHTML = '🚀 Create Account';
+}
+</script>
+</body>
+</html>
